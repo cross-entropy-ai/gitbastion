@@ -18,15 +18,44 @@ type KeySync struct {
 func New(cfg config.Config) *KeySync {
 	return &KeySync{
 		cfg:    cfg,
-		client: github.NewClient(),
+		client: github.NewClient(cfg.GHToken),
 	}
 }
 
 func (s *KeySync) Sync() error {
 	slog.Info("syncing authorized keys")
-	var lines []string
+	users := make(map[string]struct{})
 
-	for _, user := range s.cfg.AllowedUsers {
+	// Collect users from allowed_users
+	for _, u := range s.cfg.AllowedUsers {
+		users[u] = struct{}{}
+	}
+
+	// Collect users from allowed_groups (org/team-slug)
+	for _, group := range s.cfg.AllowedGroups {
+		org, slug, ok := strings.Cut(group, "/")
+		if !ok {
+			slog.Error("invalid group format, expected org/team-slug", "group", group)
+			continue
+		}
+		if s.cfg.GHToken == "" {
+			slog.Warn("GH_TOKEN required for team member lookup, skipping", "group", group)
+			continue
+		}
+		members, err := s.client.TeamMembers(org, slug)
+		if err != nil {
+			slog.Error("failed to fetch team members", "group", group, "error", err)
+			continue
+		}
+		slog.Info("fetched team members", "group", group, "count", len(members))
+		for _, m := range members {
+			users[m] = struct{}{}
+		}
+	}
+
+	// Fetch keys for all unique users
+	var lines []string
+	for user := range users {
 		keys, err := s.client.UserKeys(user)
 		if err != nil {
 			slog.Error("failed to fetch user keys", "user", user, "error", err)
