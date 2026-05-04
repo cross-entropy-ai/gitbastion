@@ -10,7 +10,7 @@ FROM alpine:3.21
 
 RUN apk add --no-cache openssh \
     && ssh-keygen -A \
-    && adduser -D -s /sbin/nologin -u 1000 git \
+    && adduser -D -s /bin/sh -u 1000 git \
     && passwd -u git \
     && mkdir -p /home/git/.ssh \
     && chmod 700 /home/git/.ssh \
