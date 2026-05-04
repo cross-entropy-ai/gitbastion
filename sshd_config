@@ -21,7 +21,7 @@ AllowAgentForwarding no
 AllowStreamLocalForwarding no
 
 PermitTTY no
-ForceCommand /sbin/nologin
+ForceCommand /usr/local/bin/banner.sh
 
 PrintMotd no
 Banner none

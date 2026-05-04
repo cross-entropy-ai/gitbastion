@@ -17,6 +17,8 @@ RUN apk add --no-cache openssh \
     && chown -R git:git /home/git/.ssh
 
 COPY sshd_config /etc/ssh/sshd_config
+COPY banner.sh /usr/local/bin/banner.sh
+RUN chmod +x /usr/local/bin/banner.sh
 COPY --from=build /gitbastion /usr/local/bin/gitbastion
 
 EXPOSE 22
