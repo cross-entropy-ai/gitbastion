@@ -1,0 +1,36 @@
+Port 22
+AddressFamily any
+ListenAddress 0.0.0.0
+
+HostKey /etc/ssh/ssh_host_ed25519_key
+HostKey /etc/ssh/ssh_host_rsa_key
+
+PermitRootLogin no
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+PasswordAuthentication no
+ChallengeResponseAuthentication no
+AuthenticationMethods publickey
+
+# TCP forwarding required for ProxyJump; everything else denied
+AllowTcpForwarding yes
+GatewayPorts no
+X11Forwarding no
+PermitTunnel no
+AllowAgentForwarding no
+AllowStreamLocalForwarding no
+
+PermitTTY no
+ForceCommand /sbin/nologin
+
+PrintMotd no
+Banner none
+PermitUserEnvironment no
+
+LoginGraceTime 30
+MaxAuthTries 3
+MaxSessions 20
+ClientAliveInterval 60
+ClientAliveCountMax 3
+
+AllowUsers ssh-bastion
