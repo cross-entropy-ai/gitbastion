@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)).With("source", "gitbastion"))
 
 	cfgPath := os.Getenv("CONFIG_PATH")
 	if cfgPath == "" {

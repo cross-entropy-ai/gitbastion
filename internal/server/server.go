@@ -1,9 +1,12 @@
 package server
 
 import (
+	"bufio"
+	"io"
 	"log/slog"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 	"time"
 
@@ -26,11 +29,14 @@ func (s *Server) Run() error {
 	}
 
 	sshd := exec.Command("/usr/sbin/sshd", "-D", "-e")
-	sshd.Stdout = os.Stdout
-	sshd.Stderr = os.Stderr
+	stderrPipe, err := sshd.StderrPipe()
+	if err != nil {
+		return err
+	}
 	if err := sshd.Start(); err != nil {
 		return err
 	}
+	go forwardLogs(stderrPipe)
 	slog.Info("sshd started")
 
 	go s.syncLoop()
@@ -42,6 +48,21 @@ func (s *Server) Run() error {
 		return err
 	}
 	return nil
+}
+
+func forwardLogs(r io.Reader) {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil)).With("source", "sshd")
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+		logger.Info(line)
+	}
+	if err := scanner.Err(); err != nil {
+		slog.Error("sshd log forwarding failed", "error", err)
+	}
 }
 
 func (s *Server) syncLoop() {
